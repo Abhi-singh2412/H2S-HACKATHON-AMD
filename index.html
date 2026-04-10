@@ -4,146 +4,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NutriTrack Hackathon | Smart Health Food Tracker</title>
+    <title>NutriTrack | Smart Food & Health Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="app-container">
+
+    <div class="app-shell">
+
+        <!-- ══════════════════════════════════════
+       SIDEBAR
+  ══════════════════════════════════════ -->
         <aside class="sidebar">
+
             <div class="brand">
-                <i class="fa-solid fa-leaf logo-icon"></i>
-                <h2>NutriTrack</h2>
+                <div class="brand-icon"><i class="fa-solid fa-leaf"></i></div>
+                <div>
+                    <h2>NutriTrack</h2>
+                    <span class="brand-sub">by AMD Slingshot</span>
+                </div>
             </div>
-            <div class="card goal-selector-card">
-                <h3>1. Select Your Goal</h3>
+
+            <!-- Goal -->
+            <div class="sidebar-section">
+                <p class="section-label">YOUR GOAL</p>
                 <div class="goal-grid" id="goalGrid">
                     <button class="goal-btn active" data-goal="balanced">
-                        <i class="fa-solid fa-scale-balanced"></i> Balanced
+                        <i class="fa-solid fa-scale-balanced"></i><span>Balanced</span>
                     </button>
                     <button class="goal-btn" data-goal="weight_loss">
-                        <i class="fa-solid fa-arrow-trend-down"></i> Weight Loss
+                        <i class="fa-solid fa-arrow-trend-down"></i><span>Weight Loss</span>
                     </button>
                     <button class="goal-btn" data-goal="muscle_gain">
-                        <i class="fa-solid fa-dumbbell"></i> Muscle Gain
+                        <i class="fa-solid fa-dumbbell"></i><span>Muscle Gain</span>
                     </button>
                     <button class="goal-btn" data-goal="diabetic">
-                        <i class="fa-solid fa-droplet"></i> Diabetic
+                        <i class="fa-solid fa-droplet"></i><span>Diabetic</span>
                     </button>
                 </div>
             </div>
-            <div class="card search-card">
-                <h3>2. Search Food</h3>
+
+            <!-- Search -->
+            <div class="sidebar-section">
+                <p class="section-label">SEARCH FOOD</p>
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="searchInput" placeholder="Try: apple, chicken, rice, burger..."
-                        autocomplete="off">
+                    <input type="text" id="searchInput" placeholder="Apple, Chicken, Maggi..." autocomplete="off">
                 </div>
                 <div id="searchLoader" class="loader hidden">
-                    <div class="spinner"></div>Searching...
+                    <div class="spinner"></div><span>Searching OpenFoodFacts…</span>
                 </div>
                 <div id="searchError" class="error-msg hidden"></div>
                 <div class="search-results" id="searchResults">
-                    <div class="empty-state">
+                    <div class="empty-state-small">
                         <i class="fa-solid fa-utensils"></i>
-                        <p>Search from 16 food categories</p>
+                        <p>Real data via OpenFoodFacts API</p>
                     </div>
                 </div>
             </div>
+
+            <!-- Water -->
+            <div class="sidebar-section">
+                <p class="section-label">WATER INTAKE</p>
+                <div class="water-tracker">
+                    <div class="water-display">
+                        <div class="water-icon-row" id="waterGlasses"></div>
+                        <p class="water-count"><span id="waterCount">0</span> / 8 glasses</p>
+                    </div>
+                    <div class="water-btns">
+                        <button class="water-btn minus" id="waterMinus"><i class="fa-solid fa-minus"></i></button>
+                        <button class="water-btn plus" id="waterPlus"><i class="fa-solid fa-plus"></i> Add
+                            Glass</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export -->
+            <div class="sidebar-section">
+                <button class="export-btn" id="exportBtn">
+                    <i class="fa-solid fa-file-export"></i> Export Daily Summary
+                </button>
+            </div>
+
         </aside>
 
+        <!-- ══════════════════════════════════════
+       MAIN DASHBOARD
+  ══════════════════════════════════════ -->
         <main class="dashboard">
-            <header class="dashboard-header">
-                <div class="header-titles">
+
+            <header class="dash-header">
+                <div>
                     <h1>Daily Dashboard</h1>
-                    <p id="dateDisplay">Today's Meal Log</p>
+                    <p id="dateDisplay" class="date-str"></p>
+                </div>
+                <div class="smart-insights" id="smartInsights">
+                    <div class="insight-pill">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>Select a goal to see smart insights.</span>
+                    </div>
                 </div>
             </header>
 
-            <div class="smart-insights" id="smartInsights">
-                <div class="insight-pill default">
-                    <i class="fa-solid fa-lightbulb"></i> Select a goal to see smart insights.
-                </div>
-            </div>
+            <!-- ── MACRO ROW ── -->
+            <section class="macro-section">
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title"><i class="fa-solid fa-fire text-orange"></i> Calories</span>
-                        <span class="stat-value" id="calValue">0 / 2000</span>
+                <!-- Donut Chart -->
+                <div class="donut-card card">
+                    <p class="card-label">MACRO SPLIT</p>
+                    <div class="donut-wrap">
+                        <canvas id="donutCanvas" width="180" height="180"></canvas>
+                        <div class="donut-center">
+                            <span id="donutCal">0</span>
+                            <small>kcal</small>
+                        </div>
                     </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar bg-orange" id="calBar" style="width: 0%"></div>
-                    </div>
+                    <div class="donut-legend" id="donutLegend"></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title"><i class="fa-solid fa-drumstick-bite text-purple"></i> Protein</span>
-                        <span class="stat-value" id="proValue">0g / 60g</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar bg-purple" id="proBar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title"><i class="fa-solid fa-wheat-awn text-yellow"></i> Carbs</span>
-                        <span class="stat-value" id="carbValue">0g / 250g</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar bg-yellow" id="carbBar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title"><i class="fa-solid fa-burger text-red"></i> Fat</span>
-                        <span class="stat-value" id="fatValue">0g / 70g</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar bg-red" id="fatBar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title"><i class="fa-solid fa-cubes-stacked text-pink"></i> Sugar</span>
-                        <span class="stat-value" id="sugarValue">0g / 30g</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar bg-pink" id="sugarBar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title"><i class="fa-solid fa-seedling text-green"></i> Fiber</span>
-                        <span class="stat-value" id="fiberValue">0g / 25g</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar bg-green" id="fiberBar" style="width: 0%"></div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="meal-log-container card">
-                <div class="section-header">
-                    <h3>My Meal Log</h3>
+                <!-- Macro Bars -->
+                <div class="macro-bars card">
+                    <p class="card-label">NUTRIENTS</p>
+                    <div class="bar-list" id="barList">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- ── MEAL LOG ── -->
+            <section class="meal-section card">
+
+                <div class="meal-header">
+                    <h3>Meal Log</h3>
+                    <div class="meal-tab-row" id="mealTabs">
+                        <button class="meal-tab active" data-tab="all">All</button>
+                        <button class="meal-tab" data-tab="breakfast"><i class="fa-solid fa-mug-hot"></i>
+                            Breakfast</button>
+                        <button class="meal-tab" data-tab="lunch"><i class="fa-solid fa-sun"></i> Lunch</button>
+                        <button class="meal-tab" data-tab="dinner"><i class="fa-solid fa-moon"></i> Dinner</button>
+                        <button class="meal-tab" data-tab="snack"><i class="fa-solid fa-cookie-bite"></i> Snack</button>
+                    </div>
                     <button class="clear-btn" id="clearLogBtn"><i class="fa-solid fa-trash-can"></i> Clear</button>
                 </div>
+
                 <div class="meal-list" id="mealList">
                     <div class="empty-state">
                         <i class="fa-solid fa-plate-wheat"></i>
-                        <p>No food added yet. Search and add items.</p>
+                        <p>No food added yet — search and add items!</p>
                     </div>
                 </div>
-            </div>
+
+            </section>
+
         </main>
     </div>
 
+    <!-- ══════════════════════════════════════
+     MEAL TIME MODAL
+══════════════════════════════════════ -->
+    <div class="modal-overlay hidden" id="mealTimeModal">
+        <div class="modal-box">
+            <p class="modal-title">When did you eat this?</p>
+            <div class="modal-food-name" id="modalFoodName"></div>
+            <div class="modal-options">
+                <button class="modal-opt" data-time="breakfast"><i class="fa-solid fa-mug-hot"></i> Breakfast</button>
+                <button class="modal-opt" data-time="lunch"><i class="fa-solid fa-sun"></i> Lunch</button>
+                <button class="modal-opt" data-time="dinner"><i class="fa-solid fa-moon"></i> Dinner</button>
+                <button class="modal-opt" data-time="snack"><i class="fa-solid fa-cookie-bite"></i> Snack</button>
+            </div>
+            <button class="modal-cancel" id="modalCancel">Cancel</button>
+        </div>
+    </div>
+
+    <!-- EXPORT MODAL -->
+    <div class="modal-overlay hidden" id="exportModal">
+        <div class="modal-box export-modal-box">
+            <p class="modal-title"><i class="fa-solid fa-file-lines"></i> Daily Summary</p>
+            <pre id="exportText" class="export-pre"></pre>
+            <div class="export-actions">
+                <button class="export-copy-btn" id="copySummaryBtn"><i class="fa-solid fa-copy"></i> Copy</button>
+                <button class="modal-cancel" id="closeExportBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toastContainer" class="toast-container"></div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
 </body>
 

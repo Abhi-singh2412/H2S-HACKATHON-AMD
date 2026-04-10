@@ -1,393 +1,697 @@
+/* ══════════════════════════════════════════
+   NUTRITRACK — app.js
+   Features: Goal-based macro targets, OpenFoodFacts search,
+   Health Score, Meal Time tabs, Donut Chart, Water Tracker,
+   Smart Insights, Export Daily Summary
+══════════════════════════════════════════ */
+
+'use strict';
+
+// ────────────────────────────────────────────
+// CONSTANTS & CONFIG
+// ────────────────────────────────────────────
+
 const GOALS = {
-    balanced: { label: 'Balanced', cals: 2000, pro: 60, carb: 250, fat: 70, sugar: 30, fiber: 25 },
-    weight_loss: { label: 'Weight Loss', cals: 1500, pro: 80, carb: 150, fat: 50, sugar: 20, fiber: 30 },
-    muscle_gain: { label: 'Muscle Gain', cals: 2500, pro: 150, carb: 300, fat: 80, sugar: 40, fiber: 30 },
-    diabetic: { label: 'Diabetic', cals: 1800, pro: 70, carb: 180, fat: 60, sugar: 15, fiber: 40 }
+    balanced: {
+        name: 'Balanced',
+        cal: 2000, protein: 50, carbs: 250, fat: 70, sugar: 30, fiber: 30,
+        insights: [
+            { text: 'Aim for colourful vegetables at every meal', icon: 'fa-carrot', cls: 'accent' },
+            { text: 'Keep meals balanced across all macros', icon: 'fa-scale-balanced', cls: '' },
+        ]
+    },
+    weight_loss: {
+        name: 'Weight Loss',
+        cal: 1500, protein: 80, carbs: 150, fat: 50, sugar: 20, fiber: 35,
+        insights: [
+            { text: 'High protein keeps you full longer', icon: 'fa-drumstick-bite', cls: 'accent' },
+            { text: 'Limit refined carbs and added sugars', icon: 'fa-ban', cls: 'warn' },
+            { text: 'Prioritise fibre — it slows digestion', icon: 'fa-seedling', cls: 'accent' },
+        ]
+    },
+    muscle_gain: {
+        name: 'Muscle Gain',
+        cal: 2500, protein: 150, carbs: 300, fat: 80, sugar: 40, fiber: 30,
+        insights: [
+            { text: 'Eat protein within 30 min after workout', icon: 'fa-dumbbell', cls: 'accent' },
+            { text: 'Complex carbs fuel your training sessions', icon: 'fa-wheat-awn', cls: '' },
+            { text: 'Calorie surplus is key — hit your target!', icon: 'fa-fire', cls: 'warn' },
+        ]
+    },
+    diabetic: {
+        name: 'Diabetic',
+        cal: 1800, protein: 60, carbs: 180, fat: 60, sugar: 10, fiber: 40,
+        insights: [
+            { text: 'Sugar limit is 10g — watch hidden sugars!', icon: 'fa-droplet', cls: 'danger' },
+            { text: 'High fibre foods lower glycaemic impact', icon: 'fa-seedling', cls: 'accent' },
+            { text: 'Avoid processed foods and white carbs', icon: 'fa-ban', cls: 'warn' },
+        ]
+    }
 };
 
-const MOCK_FOODS = {
-    apple: [
-        { name: 'Apple (Fresh)', cals: 52, pro: 0, carb: 14, fat: 0, sugar: 10, fiber: 2 },
-        { name: 'Apple Juice', cals: 46, pro: 0, carb: 11, fat: 0, sugar: 9, fiber: 0 }
-    ],
-    banana: [{ name: 'Banana', cals: 89, pro: 1, carb: 23, fat: 0, sugar: 12, fiber: 3 }],
-    chicken: [
-        { name: 'Chicken Breast (Grilled)', cals: 165, pro: 31, carb: 0, fat: 4, sugar: 0, fiber: 0 },
-        { name: 'Chicken Curry', cals: 150, pro: 12, carb: 8, fat: 9, sugar: 2, fiber: 1 }
-    ],
-    rice: [
-        { name: 'White Rice (Cooked)', cals: 130, pro: 3, carb: 28, fat: 0, sugar: 0, fiber: 0 },
-        { name: 'Brown Rice', cals: 112, pro: 2, carb: 24, fat: 1, sugar: 0, fiber: 2 }
-    ],
-    egg: [
-        { name: 'Boiled Egg', cals: 78, pro: 6, carb: 1, fat: 5, sugar: 0, fiber: 0 },
-        { name: 'Omelette', cals: 154, pro: 11, carb: 1, fat: 12, sugar: 0, fiber: 0 }
-    ],
-    maggi: [{ name: 'Maggi Noodles', cals: 350, pro: 8, carb: 52, fat: 14, sugar: 3, fiber: 2 }],
-    bread: [
-        { name: 'White Bread (1 slice)', cals: 79, pro: 3, carb: 15, fat: 1, sugar: 2, fiber: 1 },
-        { name: 'Brown Bread (1 slice)', cals: 69, pro: 4, carb: 12, fat: 1, sugar: 1, fiber: 2 }
-    ],
-    milk: [
-        { name: 'Full Fat Milk (200ml)', cals: 122, pro: 6, carb: 9, fat: 7, sugar: 9, fiber: 0 },
-        { name: 'Skimmed Milk (200ml)', cals: 70, pro: 7, carb: 10, fat: 0, sugar: 10, fiber: 0 }
-    ],
-    burger: [
-        { name: 'Beef Burger', cals: 295, pro: 17, carb: 24, fat: 14, sugar: 5, fiber: 1 },
-        { name: 'Veggie Burger', cals: 220, pro: 11, carb: 28, fat: 7, sugar: 4, fiber: 3 }
-    ],
-    pizza: [{ name: 'Pizza (1 slice)', cals: 285, pro: 12, carb: 36, fat: 10, sugar: 4, fiber: 2 }],
-    coca: [{ name: 'Coca Cola (330ml)', cals: 139, pro: 0, carb: 35, fat: 0, sugar: 35, fiber: 0 }],
-    oats: [{ name: 'Oatmeal (cooked)', cals: 71, pro: 2, carb: 12, fat: 1, sugar: 1, fiber: 2 }],
-    dal: [{ name: 'Dal (Lentil Soup)', cals: 116, pro: 9, carb: 20, fat: 0, sugar: 1, fiber: 8 }],
-    paneer: [{ name: 'Paneer (100g)', cals: 265, pro: 18, carb: 3, fat: 20, sugar: 2, fiber: 0 }],
-    salad: [{ name: 'Green Salad', cals: 20, pro: 1, carb: 3, fat: 0, sugar: 2, fiber: 2 }],
-    almonds: [{ name: 'Almonds (10 pcs)', cals: 69, pro: 3, carb: 2, fat: 6, sugar: 1, fiber: 1 }],
-    yogurt: [{ name: 'Greek Yogurt', cals: 100, pro: 10, carb: 6, fat: 2, sugar: 4, fiber: 0 }],
-    orange: [{ name: 'Orange', cals: 47, pro: 1, carb: 12, fat: 0, sugar: 9, fiber: 2 }],
-    mango: [{ name: 'Mango', cals: 60, pro: 1, carb: 15, fat: 0, sugar: 14, fiber: 2 }],
-    roti: [{ name: 'Roti / Chapati', cals: 120, pro: 4, carb: 22, fat: 3, sugar: 0, fiber: 3 }],
-    samosa: [{ name: 'Samosa (1 piece)', cals: 262, pro: 4, carb: 30, fat: 14, sugar: 2, fiber: 2 }],
-    idli: [{ name: 'Idli (2 pieces)', cals: 130, pro: 4, carb: 26, fat: 1, sugar: 0, fiber: 1 }],
-    dosa: [{ name: 'Plain Dosa', cals: 168, pro: 4, carb: 30, fat: 4, sugar: 0, fiber: 1 }]
-};
+const MACRO_CONFIG = [
+    { key: 'cal', label: 'Calories', unit: 'kcal', icon: 'fa-fire', color: '#ff8c42', donut: true },
+    { key: 'protein', label: 'Protein', unit: 'g', icon: 'fa-drumstick-bite', color: '#b48cf7', donut: true },
+    { key: 'carbs', label: 'Carbs', unit: 'g', icon: 'fa-wheat-awn', color: '#ffd166', donut: true },
+    { key: 'fat', label: 'Fat', unit: 'g', icon: 'fa-burger', color: '#ff5757', donut: true },
+    { key: 'sugar', label: 'Sugar', unit: 'g', icon: 'fa-cubes-stacked', color: '#f472b6', donut: false },
+    { key: 'fiber', label: 'Fiber', unit: 'g', icon: 'fa-seedling', color: '#34d399', donut: false },
+];
+
+const MEAL_TIMES = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+// ────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────
 
 let state = {
     goal: 'balanced',
-    mealLog: JSON.parse(localStorage.getItem('mealLog')) || [],
-    todayTotals: { cals: 0, pro: 0, carb: 0, fat: 0, sugar: 0, fiber: 0 }
+    mealLog: [],          // { id, name, macros:{cal,protein,carbs,fat,sugar,fiber}, mealTime, score }
+    waterGlasses: 0,
+    activeTab: 'all',
+    pendingFood: null,    // food object waiting for meal-time selection
 };
 
-let searchTimeout = null;
-let macroChart = null;
+// ────────────────────────────────────────────
+// DOM REFS
+// ────────────────────────────────────────────
 
-// --- DOM Elements ---
-const goalBtns = document.querySelectorAll('.goal-btn');
-const searchInput = document.getElementById('searchInput');
-const searchLoader = document.getElementById('searchLoader');
-const searchError = document.getElementById('searchError');
-const searchResults = document.getElementById('searchResults');
-const clearLogBtn = document.getElementById('clearLogBtn');
-const mealList = document.getElementById('mealList');
-const smartInsights = document.getElementById('smartInsights');
-const dateDisplay = document.getElementById('dateDisplay');
+const $ = id => document.getElementById(id);
 
-dateDisplay.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+const els = {
+    goalGrid: $('goalGrid'),
+    searchInput: $('searchInput'),
+    searchLoader: $('searchLoader'),
+    searchError: $('searchError'),
+    searchResults: $('searchResults'),
+    smartInsights: $('smartInsights'),
+    barList: $('barList'),
+    donutCanvas: $('donutCanvas'),
+    donutCal: $('donutCal'),
+    donutLegend: $('donutLegend'),
+    mealList: $('mealList'),
+    mealTabs: $('mealTabs'),
+    clearLogBtn: $('clearLogBtn'),
+    waterGlasses: $('waterGlasses'),
+    waterCount: $('waterCount'),
+    waterPlus: $('waterPlus'),
+    waterMinus: $('waterMinus'),
+    exportBtn: $('exportBtn'),
+    dateDisplay: $('dateDisplay'),
+    toastContainer: $('toastContainer'),
+    // modals
+    mealTimeModal: $('mealTimeModal'),
+    modalFoodName: $('modalFoodName'),
+    modalCancel: $('modalCancel'),
+    exportModal: $('exportModal'),
+    exportText: $('exportText'),
+    copySummaryBtn: $('copySummaryBtn'),
+    closeExportBtn: $('closeExportBtn'),
+};
 
-// --- Init ---
-function init() {
-    goalBtns.forEach(btn => btn.addEventListener('click', handleGoalSelect));
-    searchInput.addEventListener('input', handleSearchInput);
-    clearLogBtn.addEventListener('click', clearMealLog);
-    injectChartCanvas();
-    updateDashboard();
-}
+// ────────────────────────────────────────────
+// HEALTH SCORE
+// Returns 1–10 based on food and goal
+// ────────────────────────────────────────────
 
-// --- Chart Canvas ---
-function injectChartCanvas() {
-    const dashboard = document.querySelector('.dashboard');
-    const mealLogContainer = document.querySelector('.meal-log-container');
-    const chartCard = document.createElement('div');
-    chartCard.className = 'card chart-card';
-    chartCard.innerHTML = `
-        <div class="section-header">
-            <h3><i class="fa-solid fa-chart-pie"></i> Macro Breakdown</h3>
-        </div>
-        <div class="chart-wrapper">
-            <canvas id="macroChart"></canvas>
-            <div class="chart-legend" id="chartLegend"></div>
-        </div>`;
-    dashboard.insertBefore(chartCard, mealLogContainer);
-}
+function calcHealthScore(macros, goal) {
+    const { cal, protein, carbs, fat, sugar, fiber } = macros;
+    let score = 7; // baseline
 
-// --- Goal ---
-function handleGoalSelect(e) {
-    const btn = e.currentTarget;
-    goalBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.goal = btn.dataset.goal;
-    updateDashboard();
-}
-
-// --- Search ---
-function handleSearchInput(e) {
-    const query = e.target.value.trim();
-    if (searchTimeout) clearTimeout(searchTimeout);
-    if (query.length < 2) {
-        searchResults.innerHTML = `
-            <div class="empty-state">
-                <i class="fa-solid fa-utensils"></i>
-                <p>Try: apple, chicken, dal, burger, coca, roti...</p>
-            </div>`;
-        return;
-    }
-    searchTimeout = setTimeout(() => fetchFoodData(query), 400);
-}
-
-async function fetchFoodData(query) {
-    searchLoader.classList.remove('hidden');
-    searchError.classList.add('hidden');
-    searchResults.innerHTML = '';
-
-    await new Promise(resolve => setTimeout(resolve, 400));
-
-    const key = Object.keys(MOCK_FOODS).find(k =>
-        query.toLowerCase().includes(k) || k.includes(query.toLowerCase())
-    );
-
-    const products = key ? MOCK_FOODS[key] : [];
-
-    searchLoader.classList.add('hidden');
-
-    if (products.length === 0) {
-        searchResults.innerHTML = `
-            <div class="empty-state">
-                <i class="fa-solid fa-circle-question"></i>
-                <p>Not found. Try: apple, chicken, rice, egg, dal, roti, burger, pizza, maggi, oats, paneer, samosa, idli, dosa, mango, yogurt</p>
-            </div>`;
-        return;
+    if (goal === 'weight_loss') {
+        if (cal > 400) score -= 2;
+        if (cal > 600) score -= 1;
+        if (sugar > 15) score -= 2;
+        if (protein > 15) score += 1;
+        if (fiber > 5) score += 1;
+        if (fat > 20) score -= 1;
+    } else if (goal === 'muscle_gain') {
+        if (protein > 15) score += 2;
+        if (protein > 25) score += 1;
+        if (cal < 100) score -= 1;
+        if (sugar > 20) score -= 1;
+        if (carbs > 30) score += 1;
+    } else if (goal === 'diabetic') {
+        if (sugar > 5) score -= 3;
+        if (sugar > 10) score -= 2;
+        if (fiber > 5) score += 2;
+        if (carbs > 40) score -= 2;
+        if (protein > 10) score += 1;
+    } else { // balanced
+        if (sugar > 20) score -= 1;
+        if (fiber > 5) score += 1;
+        if (cal > 600) score -= 1;
+        if (protein > 10) score += 1;
     }
 
-    renderSearchResults(products);
+    return Math.max(1, Math.min(10, score));
 }
 
-function renderSearchResults(products) {
-    searchResults.innerHTML = '';
-    products.forEach(product => {
-        const health = calculateHealthScore(product.cals, product.pro, product.carb, product.fat, product.sugar, product.fiber, state.goal);
-        let badgeClass = 'badge-moderate';
-        if (health.status === 'Good') badgeClass = 'badge-good';
-        if (health.status === 'Avoid') badgeClass = 'badge-avoid';
-
-        const foodEmojis = { chicken: '🍗', rice: '🍚', egg: '🥚', apple: '🍎', banana: '🍌', burger: '🍔', pizza: '🍕', maggi: '🍜', milk: '🥛', bread: '🍞', oats: '🥣', dal: '🍲', paneer: '🧀', salad: '🥗', almonds: '🥜', coca: '🥤', yogurt: '🥛', orange: '🍊', mango: '🥭', roti: '🫓', samosa: '🥟', idli: '🍚', dosa: '🥞' };
-        const emoji = Object.keys(foodEmojis).find(k => product.name.toLowerCase().includes(k)) ? foodEmojis[Object.keys(foodEmojis).find(k => product.name.toLowerCase().includes(k))] : '🍽️';
-
-        const itemEl = document.createElement('div');
-        itemEl.className = 'food-item';
-        itemEl.innerHTML = `
-            <div class="food-img" style="display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--card-bg);border-radius:var(--radius-sm);">${emoji}</div>
-            <div class="food-info">
-                <div class="food-name">${product.name}</div>
-                <div class="food-macros">
-                    <span><i class="fa-solid fa-fire"></i> ${product.cals} kcal</span>
-                    <span><i class="fa-solid fa-cube"></i> ${product.pro}g Pro</span>
-                </div>
-            </div>
-            <div class="health-badge ${badgeClass}">${health.status} (${health.score})</div>
-            <button class="add-btn" title="Add to Meal Log"><i class="fa-solid fa-plus"></i></button>`;
-
-        itemEl.querySelector('.add-btn').addEventListener('click', () => {
-            addToMealLog({ id: Date.now().toString(), ...product, healthStatus: health.status });
-        });
-        searchResults.appendChild(itemEl);
-    });
+function scoreClass(score) {
+    if (score >= 7) return 'score-great';
+    if (score >= 4) return 'score-good';
+    return 'score-bad';
 }
 
-// --- Health Score ---
-function calculateHealthScore(cals, pro, carb, fat, sugar, fiber, goalKey) {
-    let score = 70;
-    if (goalKey === 'diabetic') {
-        if (sugar > 10) score -= 30; else if (sugar > 5) score -= 15;
-        if (fiber > 5) score += 15;
-        if (carb > 50) score -= 10;
-    } else if (goalKey === 'weight_loss') {
-        if (cals > 250) score -= 20;
-        if (fat > 15) score -= 15;
-        if (fiber > 3) score += 10;
-        if (sugar > 15) score -= 15;
-    } else if (goalKey === 'muscle_gain') {
-        if (pro > 15) score += 30;
-        else if (pro > 8) score += 15;
-        if (carb > 30) score += 5;
-        if (pro < 3) score -= 20;
-    } else {
-        if (sugar > 20) score -= 15;
-        if (fiber > 3) score += 10;
-        if (fat > 20) score -= 10;
-        if (pro > 5) score += 5;
-    }
-    score = Math.max(0, Math.min(100, score));
-    let status = 'Moderate';
-    if (score >= 80) status = 'Good';
-    if (score <= 40) status = 'Avoid';
-    return { score, status };
+function scoreMealClass(score) {
+    if (score >= 7) return 'score-great';
+    if (score >= 4) return 'score-good';
+    return 'score-bad';
 }
 
-// --- Meal Log ---
-function addToMealLog(food) {
-    state.mealLog.push({ ...food, logId: Date.now().toString() });
-    localStorage.setItem('mealLog', JSON.stringify(state.mealLog));
-    searchInput.value = '';
-    searchResults.innerHTML = `
-        <div class="empty-state">
-            <i class="fa-solid fa-check" style="color:var(--status-good)"></i>
-            <p>Added <strong>${food.name}</strong> to log!</p>
-        </div>`;
-    showToast(`✅ ${food.name} added!`);
-    updateDashboard();
+// ────────────────────────────────────────────
+// TOTALS
+// ────────────────────────────────────────────
+
+function getTotals() {
+    return state.mealLog.reduce((acc, item) => {
+        Object.keys(item.macros).forEach(k => { acc[k] = (acc[k] || 0) + item.macros[k]; });
+        return acc;
+    }, { cal: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0 });
 }
 
-function removeMeal(logId) {
-    state.mealLog = state.mealLog.filter(m => m.logId !== logId);
-    localStorage.setItem('mealLog', JSON.stringify(state.mealLog));
-    updateDashboard();
-}
+// ────────────────────────────────────────────
+// RENDER — MACRO BARS
+// ────────────────────────────────────────────
 
-function clearMealLog() {
-    state.mealLog = [];
-    localStorage.removeItem('mealLog');
-    updateDashboard();
-    showToast('🗑️ Meal log cleared!');
-}
-
-// --- Dashboard ---
-function calculateTotals() {
-    const t = { cals: 0, pro: 0, carb: 0, fat: 0, sugar: 0, fiber: 0 };
-    state.mealLog.forEach(m => {
-        t.cals += m.cals; t.pro += m.pro;
-        t.carb += m.carb; t.fat += m.fat;
-        t.sugar += m.sugar; t.fiber += m.fiber;
-    });
-    state.todayTotals = t;
-}
-
-function updateDashboard() {
-    calculateTotals();
+function renderBars() {
+    const totals = getTotals();
     const targets = GOALS[state.goal];
-    updateMacroStat('cal', state.todayTotals.cals, targets.cals, '');
-    updateMacroStat('pro', state.todayTotals.pro, targets.pro, 'g');
-    updateMacroStat('carb', state.todayTotals.carb, targets.carb, 'g');
-    updateMacroStat('fat', state.todayTotals.fat, targets.fat, 'g');
-    updateMacroStat('sugar', state.todayTotals.sugar, targets.sugar, 'g');
-    updateMacroStat('fiber', state.todayTotals.fiber, targets.fiber, 'g');
-    renderMealList();
-    generateSmartInsights(targets);
-    updateMacroChart();
+
+    els.barList.innerHTML = MACRO_CONFIG.map(m => {
+        const val = totals[m.key] || 0;
+        const target = targets[m.key];
+        const pct = Math.min((val / target) * 100, 100);
+        const over = val > target;
+        const unit = m.unit === 'kcal' ? 'kcal' : 'g';
+
+        return `
+      <div class="bar-item">
+        <div class="bar-header">
+          <span class="bar-title">
+            <i class="fa-solid ${m.icon}" style="color:${m.color}"></i>
+            ${m.label}
+          </span>
+          <span class="bar-val">${Math.round(val)}${unit} / ${target}${unit}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill ${over ? 'over' : ''}"
+               style="width:${pct}%; background:${over ? '' : m.color}; box-shadow: 0 0 8px ${m.color}66">
+          </div>
+        </div>
+      </div>
+    `;
+    }).join('');
 }
 
-function updateMacroStat(idPrefix, current, max, unit) {
-    const valueEl = document.getElementById(`${idPrefix}Value`);
-    const barEl = document.getElementById(`${idPrefix}Bar`);
-    valueEl.innerText = `${current}${unit} / ${max}${unit}`;
-    barEl.style.width = `${Math.min((current / max) * 100, 100)}%`;
-    if (current > max) {
-        barEl.style.backgroundColor = 'var(--status-avoid)';
-        valueEl.style.color = 'var(--status-avoid)';
+// ────────────────────────────────────────────
+// RENDER — DONUT CHART
+// ────────────────────────────────────────────
+
+function renderDonut() {
+    const totals = getTotals();
+    const canvas = els.donutCanvas;
+    const ctx = canvas.getContext('2d');
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const r = 76, thickness = 18;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // data: only cal, protein, carbs, fat for donut
+    const segments = [
+        { label: 'Calories', value: totals.cal, color: '#ff8c42', unit: 'kcal' },
+        { label: 'Protein', value: totals.protein, color: '#b48cf7', unit: 'g' },
+        { label: 'Carbs', value: totals.carbs, color: '#ffd166', unit: 'g' },
+        { label: 'Fat', value: totals.fat, color: '#ff5757', unit: 'g' },
+    ];
+
+    const total = segments.reduce((s, x) => s + x.value, 0);
+
+    if (total === 0) {
+        // empty ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#232733';
+        ctx.lineWidth = thickness;
+        ctx.stroke();
     } else {
-        barEl.style.backgroundColor = '';
-        valueEl.style.color = '';
+        let startAngle = -Math.PI / 2;
+        segments.forEach(seg => {
+            if (seg.value === 0) return;
+            const sliceAngle = (seg.value / total) * (Math.PI * 2);
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, startAngle, startAngle + sliceAngle);
+            ctx.strokeStyle = seg.color;
+            ctx.lineWidth = thickness;
+            ctx.lineCap = 'butt';
+            ctx.stroke();
+            startAngle += sliceAngle;
+        });
+
+        // gap effect
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = 'transparent';
+        ctx.lineWidth = thickness - 2;
+        ctx.stroke();
     }
+
+    // center calorie
+    els.donutCal.textContent = Math.round(totals.cal);
+
+    // legend
+    els.donutLegend.innerHTML = segments.map(s => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${s.color}"></div>
+      <span class="legend-label">${s.label}</span>
+      <span class="legend-val">${Math.round(s.value)}${s.unit}</span>
+    </div>
+  `).join('');
 }
+
+// ────────────────────────────────────────────
+// RENDER — SMART INSIGHTS
+// ────────────────────────────────────────────
+
+function renderInsights() {
+    const totals = getTotals();
+    const targets = GOALS[state.goal];
+    const goalInsights = GOALS[state.goal].insights;
+
+    let pills = [...goalInsights];
+
+    // Dynamic alerts
+    if (totals.cal > targets.cal) {
+        pills.unshift({ text: `Calorie limit exceeded by ${Math.round(totals.cal - targets.cal)} kcal!`, icon: 'fa-triangle-exclamation', cls: 'danger' });
+    }
+    if (state.goal === 'diabetic' && totals.sugar > targets.sugar) {
+        pills.unshift({ text: `Sugar limit exceeded! ${Math.round(totals.sugar)}g / ${targets.sugar}g`, icon: 'fa-droplet', cls: 'danger' });
+    }
+    if (totals.protein >= targets.protein * 0.9 && state.goal === 'muscle_gain') {
+        pills.unshift({ text: 'Great protein intake — on track for gains!', icon: 'fa-trophy', cls: 'accent' });
+    }
+    if (state.waterGlasses >= 8) {
+        pills.unshift({ text: 'Hydration goal achieved! 💧', icon: 'fa-droplet', cls: 'accent' });
+    }
+
+    // Show max 3
+    pills = pills.slice(0, 3);
+
+    els.smartInsights.innerHTML = pills.map(p => `
+    <div class="insight-pill ${p.cls}">
+      <i class="fa-solid ${p.icon}"></i>
+      <span>${p.text}</span>
+    </div>
+  `).join('');
+}
+
+// ────────────────────────────────────────────
+// RENDER — MEAL LIST
+// ────────────────────────────────────────────
 
 function renderMealList() {
+    const filtered = state.activeTab === 'all'
+        ? state.mealLog
+        : state.mealLog.filter(item => item.mealTime === state.activeTab);
+
+    if (filtered.length === 0) {
+        els.mealList.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-plate-wheat"></i>
+        <p>${state.activeTab === 'all' ? 'No food added yet — search and add items!' : `No items in ${state.activeTab} yet.`}</p>
+      </div>`;
+        return;
+    }
+
+    els.mealList.innerHTML = filtered.map(item => `
+    <div class="meal-item" id="meal-${item.id}">
+      <span class="meal-time-badge time-${item.mealTime}">${item.mealTime}</span>
+      <div class="meal-info">
+        <div class="meal-name">${item.name}</div>
+        <div class="meal-macros">
+          <span class="meal-macro">🔥 ${Math.round(item.macros.cal)} kcal</span>
+          <span class="meal-macro">💪 ${Math.round(item.macros.protein)}g prot</span>
+          <span class="meal-macro">🌾 ${Math.round(item.macros.carbs)}g carbs</span>
+          <span class="meal-macro">🧈 ${Math.round(item.macros.fat)}g fat</span>
+          <span class="meal-macro">🍬 ${Math.round(item.macros.sugar)}g sugar</span>
+          <span class="meal-macro">🌿 ${Math.round(item.macros.fiber)}g fiber</span>
+        </div>
+      </div>
+      <span class="meal-score ${scoreMealClass(item.score)}">${item.score}/10</span>
+      <button class="meal-remove" onclick="removeItem('${item.id}')">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+// ────────────────────────────────────────────
+// RENDER — WATER
+// ────────────────────────────────────────────
+
+function renderWater() {
+    const total = 8;
+    let html = '';
+    for (let i = 0; i < total; i++) {
+        html += `<span class="water-glass ${i < state.waterGlasses ? 'filled' : 'empty'}">💧</span>`;
+    }
+    els.waterGlasses.innerHTML = html;
+    els.waterCount.textContent = state.waterGlasses;
+}
+
+// ────────────────────────────────────────────
+// RENDER — ALL
+// ────────────────────────────────────────────
+
+function renderAll() {
+    renderBars();
+    renderDonut();
+    renderInsights();
+    renderMealList();
+    renderWater();
+}
+
+// ────────────────────────────────────────────
+// GOAL SELECTION
+// ────────────────────────────────────────────
+
+els.goalGrid.addEventListener('click', e => {
+    const btn = e.target.closest('.goal-btn');
+    if (!btn) return;
+    document.querySelectorAll('.goal-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.goal = btn.dataset.goal;
+    renderAll();
+    showToast(`Goal set to ${GOALS[state.goal].name}`, 'success', 'fa-bullseye');
+});
+
+// ────────────────────────────────────────────
+// FOOD SEARCH — OpenFoodFacts
+// ────────────────────────────────────────────
+
+let searchTimer;
+
+els.searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    const q = els.searchInput.value.trim();
+    if (q.length < 2) {
+        els.searchResults.innerHTML = `
+      <div class="empty-state-small">
+        <i class="fa-solid fa-utensils"></i>
+        <p>Real data via OpenFoodFacts API</p>
+      </div>`;
+        return;
+    }
+    searchTimer = setTimeout(() => searchFood(q), 500);
+});
+
+async function searchFood(query) {
+    els.searchLoader.classList.remove('hidden');
+    els.searchError.classList.add('hidden');
+    els.searchResults.innerHTML = '';
+
+    try {
+        const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,nutriments,brands`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Network error');
+        const data = await res.json();
+
+        const products = (data.products || []).filter(p =>
+            p.product_name && p.nutriments
+        );
+
+        if (products.length === 0) {
+            els.searchResults.innerHTML = `
+        <div class="empty-state-small">
+          <i class="fa-solid fa-face-sad-tear"></i>
+          <p>No results found. Try another name.</p>
+        </div>`;
+            return;
+        }
+
+        els.searchResults.innerHTML = products.map((p, i) => {
+            const n = p.nutriments;
+            const macros = {
+                cal: +(n['energy-kcal_100g'] || n['energy-kcal'] || 0).toFixed(1),
+                protein: +(n['proteins_100g'] || 0).toFixed(1),
+                carbs: +(n['carbohydrates_100g'] || 0).toFixed(1),
+                fat: +(n['fat_100g'] || 0).toFixed(1),
+                sugar: +(n['sugars_100g'] || 0).toFixed(1),
+                fiber: +(n['fiber_100g'] || 0).toFixed(1),
+            };
+            const score = calcHealthScore(macros, state.goal);
+            const sClass = scoreClass(score);
+
+            return `
+        <div class="result-card" data-index="${i}" style="animation-delay:${i * 0.04}s">
+          <div class="result-name">
+            <span class="score-badge ${sClass}">${score}/10</span>
+            ${p.product_name}
+          </div>
+          <div class="result-macros">
+            <span class="result-macro">🔥 ${macros.cal} kcal</span>
+            <span class="result-macro">💪 ${macros.protein}g prot</span>
+            <span class="result-macro">🌾 ${macros.carbs}g carbs</span>
+            <span class="result-macro">🧈 ${macros.fat}g fat</span>
+          </div>
+        </div>
+      `;
+        }).join('');
+
+        // click handlers
+        els.searchResults.querySelectorAll('.result-card').forEach((card, i) => {
+            card.addEventListener('click', () => {
+                const p = products[i];
+                const n = p.nutriments;
+                const macros = {
+                    cal: +(n['energy-kcal_100g'] || n['energy-kcal'] || 0).toFixed(1),
+                    protein: +(n['proteins_100g'] || 0).toFixed(1),
+                    carbs: +(n['carbohydrates_100g'] || 0).toFixed(1),
+                    fat: +(n['fat_100g'] || 0).toFixed(1),
+                    sugar: +(n['sugars_100g'] || 0).toFixed(1),
+                    fiber: +(n['fiber_100g'] || 0).toFixed(1),
+                };
+                openMealTimeModal({ name: p.product_name, macros });
+            });
+        });
+
+    } catch (err) {
+        els.searchError.textContent = 'Failed to fetch. Check your connection.';
+        els.searchError.classList.remove('hidden');
+    } finally {
+        els.searchLoader.classList.add('hidden');
+    }
+}
+
+// ────────────────────────────────────────────
+// MEAL TIME MODAL
+// ────────────────────────────────────────────
+
+function openMealTimeModal(food) {
+    state.pendingFood = food;
+    els.modalFoodName.textContent = food.name;
+    els.mealTimeModal.classList.remove('hidden');
+}
+
+els.mealTimeModal.querySelectorAll('.modal-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+        if (!state.pendingFood) return;
+        const mealTime = btn.dataset.time;
+        addFoodToLog(state.pendingFood, mealTime);
+        els.mealTimeModal.classList.add('hidden');
+        state.pendingFood = null;
+    });
+});
+
+els.modalCancel.addEventListener('click', () => {
+    els.mealTimeModal.classList.add('hidden');
+    state.pendingFood = null;
+});
+
+// close on overlay click
+els.mealTimeModal.addEventListener('click', e => {
+    if (e.target === els.mealTimeModal) {
+        els.mealTimeModal.classList.add('hidden');
+        state.pendingFood = null;
+    }
+});
+
+// ────────────────────────────────────────────
+// ADD FOOD
+// ────────────────────────────────────────────
+
+function addFoodToLog(food, mealTime) {
+    const score = calcHealthScore(food.macros, state.goal);
+    const item = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+        name: food.name,
+        macros: food.macros,
+        mealTime,
+        score,
+    };
+    state.mealLog.push(item);
+    renderAll();
+
+    const scoreMsg = score >= 7 ? '✅ Great choice!' : score >= 4 ? '⚠️ Decent pick' : '❗ Watch your intake';
+    showToast(`Added to ${mealTime} — Score ${score}/10. ${scoreMsg}`, 'success', 'fa-circle-check');
+}
+
+// ────────────────────────────────────────────
+// REMOVE FOOD
+// ────────────────────────────────────────────
+
+window.removeItem = function (id) {
+    state.mealLog = state.mealLog.filter(i => i.id !== id);
+    renderAll();
+    showToast('Item removed', 'warn', 'fa-trash-can');
+};
+
+// ────────────────────────────────────────────
+// CLEAR LOG
+// ────────────────────────────────────────────
+
+els.clearLogBtn.addEventListener('click', () => {
+    if (state.mealLog.length === 0) return;
+    state.mealLog = [];
+    renderAll();
+    showToast('Meal log cleared', 'warn', 'fa-trash-can');
+});
+
+// ────────────────────────────────────────────
+// MEAL TABS
+// ────────────────────────────────────────────
+
+els.mealTabs.addEventListener('click', e => {
+    const tab = e.target.closest('.meal-tab');
+    if (!tab) return;
+    document.querySelectorAll('.meal-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.activeTab = tab.dataset.tab;
+    renderMealList();
+});
+
+// ────────────────────────────────────────────
+// WATER
+// ────────────────────────────────────────────
+
+els.waterPlus.addEventListener('click', () => {
+    if (state.waterGlasses >= 8) {
+        showToast('Daily water goal already reached! 🎉', 'success', 'fa-trophy');
+        return;
+    }
+    state.waterGlasses++;
+    renderWater();
+    renderInsights();
+    if (state.waterGlasses === 8) {
+        showToast('Water goal achieved! Great hydration! 💧', 'success', 'fa-trophy');
+    }
+});
+
+els.waterMinus.addEventListener('click', () => {
+    if (state.waterGlasses <= 0) return;
+    state.waterGlasses--;
+    renderWater();
+    renderInsights();
+});
+
+// ────────────────────────────────────────────
+// EXPORT DAILY SUMMARY
+// ────────────────────────────────────────────
+
+els.exportBtn.addEventListener('click', () => {
+    const totals = getTotals();
+    const targets = GOALS[state.goal];
+    const goal = GOALS[state.goal].name;
+    const date = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Meal breakdown by time
+    const byTime = {};
+    MEAL_TIMES.forEach(t => {
+        const items = state.mealLog.filter(i => i.mealTime === t);
+        if (items.length) byTime[t] = items;
+    });
+
+    let text = `╔══════════════════════════════════════╗
+║     NUTRITRACK — DAILY SUMMARY       ║
+╚══════════════════════════════════════╝
+
+📅 ${date}
+🎯 Goal: ${goal}
+💧 Water: ${state.waterGlasses} / 8 glasses
+
+────────── MACRO TOTALS ──────────
+🔥 Calories : ${Math.round(totals.cal)} / ${targets.cal} kcal  ${totals.cal > targets.cal ? '⚠️ OVER' : '✅'}
+💪 Protein  : ${Math.round(totals.protein)}g / ${targets.protein}g  ${totals.protein >= targets.protein ? '✅' : ''}
+🌾 Carbs    : ${Math.round(totals.carbs)}g / ${targets.carbs}g  ${totals.carbs > targets.carbs ? '⚠️ OVER' : '✅'}
+🧈 Fat      : ${Math.round(totals.fat)}g / ${targets.fat}g  ${totals.fat > targets.fat ? '⚠️ OVER' : '✅'}
+🍬 Sugar    : ${Math.round(totals.sugar)}g / ${targets.sugar}g  ${totals.sugar > targets.sugar ? '⚠️ OVER' : '✅'}
+🌿 Fiber    : ${Math.round(totals.fiber)}g / ${targets.fiber}g  ${totals.fiber >= targets.fiber ? '✅' : ''}
+
+────────── MEAL LOG ──────────`;
+
     if (state.mealLog.length === 0) {
-        mealList.innerHTML = `
-            <div class="empty-state">
-                <i class="fa-solid fa-plate-wheat"></i>
-                <p>No food added yet. Search and add items.</p>
-            </div>`;
-        return;
-    }
-    mealList.innerHTML = '';
-    state.mealLog.forEach(food => {
-        const el = document.createElement('div');
-        el.className = 'log-item';
-        let icon = `<i class="fa-solid fa-circle" style="color:var(--status-moderate)"></i>`;
-        if (food.healthStatus === 'Good') icon = `<i class="fa-solid fa-circle-check" style="color:var(--status-good)"></i>`;
-        if (food.healthStatus === 'Avoid') icon = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--status-avoid)"></i>`;
-        el.innerHTML = `
-            <div class="log-item-info">
-                <h4>${icon} ${food.name}</h4>
-                <p>${food.cals} kcal | ${food.pro}g Pro | ${food.carb}g Carb | ${food.fat}g Fat</p>
-            </div>
-            <button class="remove-btn" onclick="removeMeal('${food.logId}')">
-                <i class="fa-solid fa-xmark"></i>
-            </button>`;
-        mealList.appendChild(el);
-    });
-}
-
-// --- Chart ---
-function updateMacroChart() {
-    const ctx = document.getElementById('macroChart');
-    if (!ctx) return;
-    const t = state.todayTotals;
-    const total = t.pro + t.carb + t.fat;
-    if (macroChart) macroChart.destroy();
-    if (total === 0) {
-        document.getElementById('chartLegend').innerHTML = `<p style="color:#888;font-size:13px">Add food to see breakdown</p>`;
-        return;
-    }
-    macroChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Protein', 'Carbs', 'Fat'],
-            datasets: [{
-                data: [t.pro, t.carb, t.fat],
-                backgroundColor: ['#a78bfa', '#fbbf24', '#f87171'],
-                borderWidth: 0,
-                hoverOffset: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            cutout: '70%',
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: (c) => ` ${c.label}: ${c.raw}g` } }
-            }
-        }
-    });
-    const proP = Math.round((t.pro / total) * 100);
-    const carbP = Math.round((t.carb / total) * 100);
-    const fatP = Math.round((t.fat / total) * 100);
-    document.getElementById('chartLegend').innerHTML = `
-        <div class="legend-item"><span class="dot" style="background:#a78bfa"></span> Protein ${proP}%</div>
-        <div class="legend-item"><span class="dot" style="background:#fbbf24"></span> Carbs ${carbP}%</div>
-        <div class="legend-item"><span class="dot" style="background:#f87171"></span> Fat ${fatP}%</div>`;
-}
-
-// --- Smart Insights ---
-function generateSmartInsights(targets) {
-    const t = state.todayTotals;
-    const insights = [];
-    if (t.cals === 0) {
-        insights.push({ type: 'info', text: 'Start logging meals to see your daily insights.', icon: 'info-circle' });
+        text += '\nNo meals logged today.';
     } else {
-        if (state.goal === 'diabetic') {
-            if (t.sugar > targets.sugar) insights.push({ type: 'warning', text: '⚠️ Sugar limit exceeded! Be careful.', icon: 'triangle-exclamation' });
-            else if (t.sugar > targets.sugar * 0.8) insights.push({ type: 'warning', text: 'Approaching daily sugar limit.', icon: 'bell' });
-            if (t.fiber > targets.fiber * 0.5) insights.push({ type: 'success', text: 'Great fiber intake! Helps stabilize blood sugar.', icon: 'check-circle' });
-        }
-        if (state.goal === 'muscle_gain') {
-            if (t.pro < targets.pro * 0.3 && t.cals > targets.cals * 0.5) insights.push({ type: 'warning', text: 'Protein too low for your calorie count today.', icon: 'dumbbell' });
-            else if (t.pro >= targets.pro) insights.push({ type: 'success', text: 'Protein target reached! 💪', icon: 'check-circle' });
-        }
-        if (state.goal === 'weight_loss') {
-            if (t.cals > targets.cals) insights.push({ type: 'warning', text: '⚠️ Calorie limit exceeded!', icon: 'triangle-exclamation' });
-            else if (t.cals > targets.cals * 0.8) insights.push({ type: 'info', text: 'Close to your calorie limit today.', icon: 'bell' });
-        }
-        if (t.fat > targets.fat) insights.push({ type: 'warning', text: 'Daily fat allowance exceeded.', icon: 'burger' });
-        if (t.cals > 0 && insights.length === 0) insights.push({ type: 'success', text: '🌟 Perfectly on track with your macros!', icon: 'star' });
+        MEAL_TIMES.forEach(t => {
+            if (!byTime[t]) return;
+            text += `\n\n${t.toUpperCase()}:`;
+            byTime[t].forEach(item => {
+                text += `\n  • ${item.name} [Score: ${item.score}/10]`;
+                text += `\n    ${Math.round(item.macros.cal)}kcal | ${Math.round(item.macros.protein)}g prot | ${Math.round(item.macros.carbs)}g carbs`;
+            });
+        });
     }
-    smartInsights.innerHTML = '';
-    insights.forEach(ins => {
-        const el = document.createElement('div');
-        el.className = `insight-pill ${ins.type}`;
-        el.innerHTML = `<i class="fa-solid fa-${ins.icon}"></i> ${ins.text}`;
-        smartInsights.appendChild(el);
+
+    text += `\n\n──────────────────────────────────────
+Generated by NutriTrack | AMD Slingshot Hackathon`;
+
+    els.exportText.textContent = text;
+    els.exportModal.classList.remove('hidden');
+});
+
+els.copySummaryBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(els.exportText.textContent).then(() => {
+        showToast('Summary copied to clipboard!', 'success', 'fa-copy');
+    });
+});
+
+els.closeExportBtn.addEventListener('click', () => els.exportModal.classList.add('hidden'));
+
+els.exportModal.addEventListener('click', e => {
+    if (e.target === els.exportModal) els.exportModal.classList.add('hidden');
+});
+
+// ────────────────────────────────────────────
+// TOAST
+// ────────────────────────────────────────────
+
+function showToast(msg, type = 'success', icon = 'fa-circle-check') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fa-solid ${icon}"></i>${msg}`;
+    els.toastContainer.appendChild(toast);
+    setTimeout(() => toast.remove(), 3200);
+}
+
+// ────────────────────────────────────────────
+// DATE DISPLAY
+// ────────────────────────────────────────────
+
+function setDate() {
+    const d = new Date();
+    els.dateDisplay.textContent = d.toLocaleDateString('en-IN', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
 }
 
-// --- Toast ---
-function showToast(message) {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerText = message;
-    container.appendChild(toast);
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
+// ────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────
+
+function init() {
+    setDate();
+    renderAll();
+    showToast('Welcome to NutriTrack! 🥗 Select a goal to start.', 'success', 'fa-leaf');
 }
 
 init();
