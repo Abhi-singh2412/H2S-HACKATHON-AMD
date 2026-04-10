@@ -5,27 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NutriTrack Hackathon | Smart Health Food Tracker</title>
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div class="app-container">
-
-        <!-- Left Panel: Setup & Search -->
         <aside class="sidebar">
             <div class="brand">
                 <i class="fa-solid fa-leaf logo-icon"></i>
                 <h2>NutriTrack</h2>
             </div>
-
-            <!-- Goal Setting -->
             <div class="card goal-selector-card">
                 <h3>1. Select Your Goal</h3>
                 <div class="goal-grid" id="goalGrid">
@@ -43,32 +36,26 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Search Area -->
             <div class="card search-card">
                 <h3>2. Search Food</h3>
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="searchInput" placeholder="E.g., Apple, Maggi, Chicken..." autocomplete="off">
+                    <input type="text" id="searchInput" placeholder="Try: apple, chicken, rice, burger..."
+                        autocomplete="off">
                 </div>
-
-                <!-- Loading & Error States -->
                 <div id="searchLoader" class="loader hidden">
-                    <div class="spinner"></div>Searching OpenFoodFacts...
+                    <div class="spinner"></div>Searching...
                 </div>
                 <div id="searchError" class="error-msg hidden"></div>
-
-                <!-- Search Results -->
                 <div class="search-results" id="searchResults">
                     <div class="empty-state">
                         <i class="fa-solid fa-utensils"></i>
-                        <p>Real nutrition from OpenFoodFacts API</p>
+                        <p>Search from 16 food categories</p>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <!-- Right Panel: Dashboard -->
         <main class="dashboard">
             <header class="dashboard-header">
                 <div class="header-titles">
@@ -77,17 +64,13 @@
                 </div>
             </header>
 
-            <!-- Smart Insights -->
             <div class="smart-insights" id="smartInsights">
-                <!-- Injected via JS -->
                 <div class="insight-pill default">
                     <i class="fa-solid fa-lightbulb"></i> Select a goal to see smart insights.
                 </div>
             </div>
 
-            <!-- Macro Overview -->
             <div class="stats-grid">
-                <!-- Calories -->
                 <div class="stat-card">
                     <div class="stat-header">
                         <span class="stat-title"><i class="fa-solid fa-fire text-orange"></i> Calories</span>
@@ -97,17 +80,15 @@
                         <div class="progress-bar bg-orange" id="calBar" style="width: 0%"></div>
                     </div>
                 </div>
-                <!-- Protein -->
                 <div class="stat-card">
                     <div class="stat-header">
                         <span class="stat-title"><i class="fa-solid fa-drumstick-bite text-purple"></i> Protein</span>
-                        <span class="stat-value" id="proValue">0g / 50g</span>
+                        <span class="stat-value" id="proValue">0g / 60g</span>
                     </div>
                     <div class="progress-bar-container">
                         <div class="progress-bar bg-purple" id="proBar" style="width: 0%"></div>
                     </div>
                 </div>
-                <!-- Carbs -->
                 <div class="stat-card">
                     <div class="stat-header">
                         <span class="stat-title"><i class="fa-solid fa-wheat-awn text-yellow"></i> Carbs</span>
@@ -117,7 +98,6 @@
                         <div class="progress-bar bg-yellow" id="carbBar" style="width: 0%"></div>
                     </div>
                 </div>
-                <!-- Fat -->
                 <div class="stat-card">
                     <div class="stat-header">
                         <span class="stat-title"><i class="fa-solid fa-burger text-red"></i> Fat</span>
@@ -127,7 +107,6 @@
                         <div class="progress-bar bg-red" id="fatBar" style="width: 0%"></div>
                     </div>
                 </div>
-                <!-- Sugar -->
                 <div class="stat-card">
                     <div class="stat-header">
                         <span class="stat-title"><i class="fa-solid fa-cubes-stacked text-pink"></i> Sugar</span>
@@ -137,11 +116,10 @@
                         <div class="progress-bar bg-pink" id="sugarBar" style="width: 0%"></div>
                     </div>
                 </div>
-                <!-- Fiber -->
                 <div class="stat-card">
                     <div class="stat-header">
                         <span class="stat-title"><i class="fa-solid fa-seedling text-green"></i> Fiber</span>
-                        <span class="stat-value" id="fiberValue">0g / 30g</span>
+                        <span class="stat-value" id="fiberValue">0g / 25g</span>
                     </div>
                     <div class="progress-bar-container">
                         <div class="progress-bar bg-green" id="fiberBar" style="width: 0%"></div>
@@ -149,7 +127,6 @@
                 </div>
             </div>
 
-            <!-- Meal Log -->
             <div class="meal-log-container card">
                 <div class="section-header">
                     <h3>My Meal Log</h3>
@@ -162,11 +139,9 @@
                     </div>
                 </div>
             </div>
-
         </main>
     </div>
 
-    <!-- Modals / Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
